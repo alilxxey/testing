@@ -22,14 +22,14 @@ include(CMakeParseArguments)
 
 # ---------- Поддерживаемые переменные окружения / кэш -------------
 # Можно задать StellaVSLAM_ROOT=/opt/stella_vslam, или
-# STELLAVSLAM_ROOT, или указать вручную STELLAVSLAM_INCLUDE_DIR и/или STELLAVSLAM_LIBRARY.
+# STELLAVSLAM_ROOT, либо вручную STELLAVSLAM_INCLUDE_DIR/STELLAVSLAM_LIBRARY.
 
 set(_STELLAVSLAM_HINTS "")
 if(DEFINED ENV{StellaVSLAM_ROOT})
     list(APPEND _STELLAVSLAM_HINTS $ENV{StellaVSLAM_ROOT})
 endif()
-if(DEFINED ENV{STELLAVSLAM_ROOT})
-    list(APPEND _STELLAVSLAM_HINTS $ENV{STELLAVSLAM_ROOT})
+if(DEFINED ENV{stellavslam_ROOT})
+    list(APPEND _STELLAVSLAM_HINTS $ENV{stellavslam_ROOT})
 endif()
 if(DEFINED StellaVSLAM_ROOT)
     list(APPEND _STELLAVSLAM_HINTS ${StellaVSLAM_ROOT})
@@ -58,19 +58,17 @@ if(NOT STELLAVSLAM_LIBRARY AND NOT _STELLAVSLAM_HINTS STREQUAL "")
     find_library(STELLAVSLAM_LIBRARY
             NAMES  stella_vslam openvslam
             HINTS  ${_STELLAVSLAM_HINTS}
-            PATH_SUFFIXES lib lib64 lib64/stella_vslam)
+            PATH_SUFFIXES lib lib64)
 endif()
 
 # Fallback: системные пути (/usr/lib, /usr/local/lib)
 if(NOT STELLAVSLAM_LIBRARY)
     find_library(STELLAVSLAM_LIBRARY
             NAMES stella_vslam openvslam
-            PATH_SUFFIXES lib lib64 lib64/stella_vslam)
+            PATH_SUFFIXES lib lib64)
 endif()
 
-# ---------- Извлечение версии из version.h (если есть) ------------
-
-# ---------- извлечение версии -----------------------------------------
+# ---------- Извлечение версии из version.h (если есть) -------------
 if(STELLAVSLAM_INCLUDE_DIR AND EXISTS "${STELLAVSLAM_INCLUDE_DIR}/openvslam/version.h")
     file(STRINGS "${STELLAVSLAM_INCLUDE_DIR}/openvslam/version.h"
             _ver_line REGEX "#define +OPENVSLAM_VERSION +\"([0-9]+\\.[0-9]+\\.[0-9]+)\"")
@@ -79,17 +77,19 @@ if(STELLAVSLAM_INCLUDE_DIR AND EXISTS "${STELLAVSLAM_INCLUDE_DIR}/openvslam/vers
     endif()
 endif()
 
-# ---------- создание imported target ---------------------------------
+# ---------- Создание импортированной цели ----------------------------
 if(STELLAVSLAM_INCLUDE_DIR AND STELLAVSLAM_LIBRARY AND NOT TARGET StellaVSLAM::StellaVSLAM)
     add_library(StellaVSLAM::StellaVSLAM UNKNOWN IMPORTED)
     set_target_properties(StellaVSLAM::StellaVSLAM PROPERTIES
-            IMPORTED_LOCATION "${STELLAVSLAM_LIBRARY}"
-            INTERFACE_INCLUDE_DIRECTORIES "${STELLAVSLAM_INCLUDE_DIR}")
+            IMPORTED_LOCATION             "${STELLAVSLAM_LIBRARY}"
+            INTERFACE_INCLUDE_DIRECTORIES  "${STELLAVSLAM_INCLUDE_DIR}"
+    )
 endif()
 
-# ---------- результат -------------------------------------------------
+# ---------- Результат find_package ------------------------------------
 find_package_handle_standard_args(StellaVSLAM
         REQUIRED_VARS STELLAVSLAM_LIBRARY STELLAVSLAM_INCLUDE_DIR
-        VERSION_VAR   STELLAVSLAM_VERSION)
+        VERSION_VAR   STELLAVSLAM_VERSION
+)
 
 mark_as_advanced(STELLAVSLAM_INCLUDE_DIR STELLAVSLAM_LIBRARY STELLAVSLAM_ROOT)
