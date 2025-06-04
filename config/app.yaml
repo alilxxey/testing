@@ -1,0 +1,32 @@
+# ---------------------------------------------------------------
+# app.yaml  —  параметры приложения QR-SLAM
+# ---------------------------------------------------------------
+
+# ID камеры (cv::VideoCapture)
+camera_id: 0
+
+# Желаемый размер окна. Если камера выдаёт другое разрешение,
+# OpenCV автоматически сделает letterbox.
+window:
+  width : 1280
+  height: 720
+
+# Целевой FPS (лимит). 0 = без лимита.
+fps_target: 60
+
+# Автосканер QR-кодов
+qr_scan:
+  enable        : true
+  interval_frame: 2     # каждые N кадров
+  detector      : "opencv"   # opencv | zbar
+  marker_size_m : 0.040      # физическая сторона QR-кода
+
+# Pangolin-viewer
+viewer:
+  enable : true
+  keyframe_graph: true
+
+# Лог-файлы
+log:
+  level: "info"
+  dir  : "./logs"

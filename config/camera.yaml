@@ -1,0 +1,35 @@
+# ---------------------------------------------------------------
+# camera.yaml  —  калибровка и ORB-параметры камеры по OpenVSLAM
+# ---------------------------------------------------------------
+
+# ---------- базовые сведения ----------
+Camera.name: "Generic USB Cam 720p"
+Camera.setup: "monocular"          # mono | stereo | rgbd
+Camera.model: "perspective"        # pinhole
+Camera.color_order: "RGB"          # входной кадр rgb
+
+# ---------- внутренняя калибровка ----------
+#  ➜ эти числа ЗАМЕНИТЕ на реальные из calibrateCamera().
+Camera.fx: 700.0
+Camera.fy: 700.0
+Camera.cx: 640.0
+Camera.cy: 360.0
+
+# 5-коэффициентная модель дисторсии
+Camera.k1: 0.0
+Camera.k2: 0.0
+Camera.p1: 0.0
+Camera.p2: 0.0
+Camera.k3: 0.0
+
+# ---------- габариты и FPS ----------
+Camera.cols: 1280
+Camera.rows: 720
+Camera.fps : 60.0
+
+# ---------- ORB-экстрактор ----------
+Feature.max_num_keypoints: 1000
+Feature.scale_factor     : 1.2
+Feature.num_levels       : 8
+Feature.ini_fast_threshold: 20
+Feature.min_fast_threshold: 7
