@@ -1,18 +1,18 @@
 # ----------------------------------------------------------------------
 #  FindStellaVSLAM.cmake
 #
-#  Ищет установленную библиотеку Stella-/OpenVSLAM и создаёт
-#  импортированную цель StellaVSLAM::StellaVSLAM
+#  Ищет установленную библиотеку Stella-/OpenVSLAM (StellaVSLAM) и создаёт
+#  IMPORTED-таргет StellaVSLAM::StellaVSLAM
 #
 #  Пользователь может задать:
-#     • StellaVSLAM_ROOT или STELLAVSLAM_ROOT    — абсолютный префикс
+#     • StellaVSLAM_ROOT или STELLAVSLAM_ROOT    — абсолютный префикс установки
 #     • STELLAVSLAM_INCLUDE_DIR / STELLAVSLAM_LIBRARY  — явные пути
 #
-#  Найденные переменные (public):
+#  Выставляются следующие переменные (public):
 #     STELLAVSLAM_FOUND          TRUE / FALSE
 #     STELLAVSLAM_INCLUDE_DIR    полный_путь_до_директории_с_заголовками
 #     STELLAVSLAM_LIBRARY        полный_путь_до_файла_библиотеки
-#     STELLAVSLAM_VERSION        X.Y.Z
+#     STELLAVSLAM_VERSION        X.Y.Z    (если удалось прочитать openvslam/version.h)
 #
 #  © 2025 YourCompany — MIT License
 # ----------------------------------------------------------------------
@@ -20,10 +20,10 @@
 include(FindPackageHandleStandardArgs)
 
 # ----------------------------------------------------------------------------
-#  Поддержка переменных окружения / кэша:
-#    • StellaVSLAM_ROOT  / STELLAVSLAM_ROOT  — префикс установки
-#    • STELLAVSLAM_INCLUDE_DIR               — полный путь до папки, содержащей openvslam/system.h
-#    • STELLAVSLAM_LIBRARY                   — полный путь до libstella_vslam.so или libopenvslam.so
+#   Поддержка переменных окружения / кэша:
+#     • StellaVSLAM_ROOT / STELLAVSLAM_ROOT    — префикс (например, /usr/local или /opt/stella_vslam)
+#     • STELLAVSLAM_INCLUDE_DIR                 — полный путь до каталога с system.h
+#     • STELLAVSLAM_LIBRARY                     — полный путь до .so (или .a)
 # ----------------------------------------------------------------------------
 
 set(_STELLAVSLAM_HINTS "")
@@ -41,21 +41,17 @@ if(DEFINED STELLAVSLAM_ROOT)
 endif()
 
 # ----------------------------------------------------------------------------
-#  1) Поиск заголовков openvslam/system.h
-#
-#  Мы ожидаем, что после `sudo make install` у вас появился каталог:
-#
-#    /usr/local/include/stella_vslam/openvslam/system.h
-#
-#  Поэтому пробуем:
-#    - HINTS:  <StellaVSLAM_ROOT>/include, <StellaVSLAM_ROOT>/include/stella_vslam, <StellaVSLAM_ROOT>/include/stella_vslam/openvslam
-#    - Fallback: системные пути (/usr/local/include, /usr/include) + все подпапки stella_vslam/openvslam
+#   1) Поиск заголовков: пробуем несколько вариантов
+#      – openvslam/system.h   (классический путь для OpenVSLAM)
+#      – stella_vslam/system.h (новый путь в community-ветке StellaVSLAM)
 # ----------------------------------------------------------------------------
 
 if(NOT STELLAVSLAM_INCLUDE_DIR AND NOT _STELLAVSLAM_HINTS STREQUAL "")
     find_path(STELLAVSLAM_INCLUDE_DIR
-            NAMES  openvslam/system.h
-            HINTS  ${_STELLAVSLAM_HINTS}
+            NAMES
+            openvslam/system.h
+            stella_vslam/system.h
+            HINTS ${_STELLAVSLAM_HINTS}
             PATH_SUFFIXES
             include
             include/openvslam
@@ -66,9 +62,14 @@ endif()
 
 if(NOT STELLAVSLAM_INCLUDE_DIR)
     find_path(STELLAVSLAM_INCLUDE_DIR
-            NAMES  openvslam/system.h
+            NAMES
+            openvslam/system.h
+            stella_vslam/system.h
             PATH_SUFFIXES
             include
+            include/openvslam
+            include/stella_vslam
+            include/stella_vslam/openvslam
             openvslam
             stella_vslam/openvslam
             stella_vslam
@@ -76,14 +77,9 @@ if(NOT STELLAVSLAM_INCLUDE_DIR)
 endif()
 
 # ----------------------------------------------------------------------------
-#  2) Поиск библиотеки libstella_vslam.so  (или libopenvslam.so)
-#
-#  Ожидаем, что после установки библиотека находится в:
-#    /usr/local/lib/libstella_vslam.so
-#
-#  Поэтому ищем:
-#    - HINTS:  <StellaVSLAM_ROOT>/lib, <StellaVSLAM_ROOT>/lib64, <StellaVSLAM_ROOT>/lib/stella_vslam
-#    - Fallback: системные пути (/usr/local/lib, /usr/lib) + подпапки lib/stella_vslam
+#   2) Поиск библиотеки: пробуем
+#      – libstella_vslam.so (обычно)
+#      – libopenvslam.so      (альтернатива)
 # ----------------------------------------------------------------------------
 
 if(NOT STELLAVSLAM_LIBRARY AND NOT _STELLAVSLAM_HINTS STREQUAL "")
@@ -110,7 +106,7 @@ if(NOT STELLAVSLAM_LIBRARY)
 endif()
 
 # ----------------------------------------------------------------------------
-#  3) Извлечение версии OPENVSLAM из заголовка version.h (если есть)
+#   3) Читаем версию (если version.h найдён)
 # ----------------------------------------------------------------------------
 
 if(STELLAVSLAM_INCLUDE_DIR AND EXISTS "${STELLAVSLAM_INCLUDE_DIR}/openvslam/version.h")
@@ -123,7 +119,7 @@ if(STELLAVSLAM_INCLUDE_DIR AND EXISTS "${STELLAVSLAM_INCLUDE_DIR}/openvslam/vers
 endif()
 
 # ----------------------------------------------------------------------------
-#  4) Создание импортированного target’а StellaVSLAM::StellaVSLAM
+#   4) Создаём импортированный таргет StellaVSLAM::StellaVSLAM
 # ----------------------------------------------------------------------------
 
 if(STELLAVSLAM_INCLUDE_DIR AND STELLAVSLAM_LIBRARY AND NOT TARGET StellaVSLAM::StellaVSLAM)
@@ -135,7 +131,7 @@ if(STELLAVSLAM_INCLUDE_DIR AND STELLAVSLAM_LIBRARY AND NOT TARGET StellaVSLAM::S
 endif()
 
 # ----------------------------------------------------------------------------
-#  5) Завершение и проверка:  если не найден ни include, ни library — выдаём ошибку
+#   5) Итог: проверяем, что нашли и include, и библиотеку
 # ----------------------------------------------------------------------------
 
 find_package_handle_standard_args(StellaVSLAM
