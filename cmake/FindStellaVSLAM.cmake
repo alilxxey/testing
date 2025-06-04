@@ -10,8 +10,8 @@
 #
 #  Найденные переменные (public):
 #     STELLAVSLAM_FOUND          TRUE / FALSE
-#     STELLAVSLAM_INCLUDE_DIR    <путь_до_заголовков>
-#     STELLAVSLAM_LIBRARY        <путь_до_библиотеки>
+#     STELLAVSLAM_INCLUDE_DIR    полный_путь_до_заголовков
+#     STELLAVSLAM_LIBRARY        полный_путь_до_библиотеки
 #     STELLAVSLAM_VERSION        X.Y.Z
 #
 #  © 2025 YourCompany — MIT License
@@ -20,7 +20,10 @@
 include(FindPackageHandleStandardArgs)
 include(CMakeParseArguments)
 
-# ---------- hint paths ------------------------------------------------
+# ---------- Поддерживаемые переменные окружения / кэш -------------
+# Можно задать StellaVSLAM_ROOT=/opt/stella_vslam, или
+# STELLAVSLAM_ROOT, или указать вручную STELLAVSLAM_INCLUDE_DIR и/или STELLAVSLAM_LIBRARY.
+
 set(_STELLAVSLAM_HINTS "")
 if(DEFINED ENV{StellaVSLAM_ROOT})
     list(APPEND _STELLAVSLAM_HINTS $ENV{StellaVSLAM_ROOT})
@@ -35,7 +38,7 @@ if(DEFINED STELLAVSLAM_ROOT)
     list(APPEND _STELLAVSLAM_HINTS ${STELLAVSLAM_ROOT})
 endif()
 
-# ---------- поиск заголовков -----------------------------------------
+# ---------- Поиск заголовков (openvslam/system.h)  -------------------
 if(NOT STELLAVSLAM_INCLUDE_DIR AND NOT _STELLAVSLAM_HINTS STREQUAL "")
     find_path(STELLAVSLAM_INCLUDE_DIR
             NAMES  openvslam/system.h
@@ -43,27 +46,29 @@ if(NOT STELLAVSLAM_INCLUDE_DIR AND NOT _STELLAVSLAM_HINTS STREQUAL "")
             PATH_SUFFIXES include include/openvslam include/stella_vslam)
 endif()
 
-# fallback — системные пути
+# Fallback: системные пути (/usr/include, /usr/local/include)
 if(NOT STELLAVSLAM_INCLUDE_DIR)
     find_path(STELLAVSLAM_INCLUDE_DIR
             NAMES  openvslam/system.h
             PATH_SUFFIXES openvslam stella_vslam)
 endif()
 
-# ---------- поиск библиотеки ------------------------------------------
+# ---------- Поиск библиотеки (libstella_vslam.so/.a) -----------------
 if(NOT STELLAVSLAM_LIBRARY AND NOT _STELLAVSLAM_HINTS STREQUAL "")
     find_library(STELLAVSLAM_LIBRARY
             NAMES  stella_vslam openvslam
             HINTS  ${_STELLAVSLAM_HINTS}
-            PATH_SUFFIXES lib lib64)
+            PATH_SUFFIXES lib lib64 lib64/stella_vslam)
 endif()
 
-# fallback — системные пути
+# Fallback: системные пути (/usr/lib, /usr/local/lib)
 if(NOT STELLAVSLAM_LIBRARY)
     find_library(STELLAVSLAM_LIBRARY
             NAMES stella_vslam openvslam
-            PATH_SUFFIXES lib lib64)
+            PATH_SUFFIXES lib lib64 lib64/stella_vslam)
 endif()
+
+# ---------- Извлечение версии из version.h (если есть) ------------
 
 # ---------- извлечение версии -----------------------------------------
 if(STELLAVSLAM_INCLUDE_DIR AND EXISTS "${STELLAVSLAM_INCLUDE_DIR}/openvslam/version.h")
